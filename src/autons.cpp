@@ -32,41 +32,23 @@ void scoreOneClose()
   chassis.drive_distance(-7.85);
   lift.spinTo(90, deg);
   pistonClaw = !pistonClaw;
-  lift.spinTo(110, deg);
-  lift.spinTo(90, deg);
   lift.spinTo(300, deg);
   //Get Second Pin
-  chassis.drive_distance(7.25);
+  chassis.drive_distance(7);
   chassis.turn_to_angle(45);
-  chassis.drive_distance(-10.65);
+  chassis.drive_distance(-10.25);
   lift.spinTo(85, deg);
   pistonClaw = !pistonClaw;
   //Score Second Pin
   lift.spinTo(420, deg);
-  chassis.drive_distance(-3);
-  chassis.turn_to_angle(180);
-  chassis.drive_distance(-8);
-  lift.spinTo(370, deg);
+  chassis.turn_to_angle(165);
+  chassis.drive_distance(-7);
+  lift.spinTo(400, deg);
   pistonClaw = !pistonClaw;
-  lift.spinTo(420, deg);
-  //Get Third Pin
-  chassis.drive_distance(6);
+  //Everything before this is final except time optimization, work from after here
+  chassis.drive_distance(7);
   chassis.turn_to_angle(135);
-  chassis.drive_distance(-11);
-  lift.spinTo(85, deg);
-  pistonClaw = !pistonClaw;
-  //Score Third Pin
-  lift.spinTo(660, deg);
-  chassis.turn_to_angle(90);
-  chassis.drive_distance(-6);
-  lift.spinTo(520, deg);
-  pistonClaw = !pistonClaw;
-  lift.spinTo(660, deg);
-  //Leave
-  chassis.drive_distance(4);
-  pistonClaw = !pistonClaw;
-  lift.spinTo(0, deg);
-  pistonHinge = !pistonHinge;
+  
 }
 
 void scoreOneFar()
