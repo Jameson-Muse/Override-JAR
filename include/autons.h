@@ -5,11 +5,11 @@ class Drive;
 
 extern Drive chassis;
 
-void terribleAutonRight();
 void toggler();
-void fullMidAuto();
-void skillsAuton();
+void scoreOneClose();
+void scoreOneFar();
 void SAWPHelper();
+void Skills();
 void default_constants();
 
 void drive_test();

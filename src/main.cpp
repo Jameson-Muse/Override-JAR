@@ -38,27 +38,27 @@ Drive chassis(
 //HOLONOMIC_TWO_ROTATION
 //
 //Write it here:
-TANK_TWO_ROTATION,
+TANK_ONE_FORWARD_ROTATION,
 
 //Add the names of your Drive motors into the motor groups below, separated by commas, i.e. motor_group(Motor1,Motor2,Motor3).
 //You will input whatever motor names you chose when you configured your robot using the sidebar configurer, they don't have to be "Motor1" and "Motor2".
 
 //Left Motors:
-motor_group(frontLeft, rearLeft),
+motor_group(frontLeft, midLeft, rearLeft),
 
 //Right Motors:
-motor_group(frontRight, rearRight),
+motor_group(frontRight, midRight, rearRight),
 
 //Specify the PORT NUMBER of your inertial sensor, in PORT format (i.e. "PORT1", not simply "1"):
-PORT7,
+PORT9,
 
 //Input your wheel diameter. (4" omnis are actually closer to 4.125"):
-4.125,
+2.75,
 
 //External ratio, must be in decimal, in the format of input teeth/output teeth.
 //If your motor has an 84-tooth gear and your wheel has a 60-tooth gear, this value will be 1.4.
 //If the motor drives the wheel directly, this value is 1:
-0.571,
+0.75,
 
 //Gyro scale, this is what your gyro reads when you spin the robot 360 degrees.
 //For most cases 360 will do fine here, but this scale factor can be very helpful when precision is necessary.
@@ -84,7 +84,7 @@ PORT3,     -PORT4,
 //If you are using position tracking, this is the Forward Tracker port (the tracker which runs parallel to the direction of the chassis).
 //If this is a rotation sensor, enter it in "PORT1" format, inputting the port below.
 //If this is an encoder, enter the port as an integer. Triport A will be a "1", Triport B will be a "2", etc.
-PORT16,
+PORT21,
 
 //Input the Forward Tracker diameter (reverse it to make the direction switch):
 2.125,
@@ -95,7 +95,7 @@ PORT16,
 0,
 
 //Input the Sideways Tracker Port, following the same steps as the Forward Tracker Port:
-PORT15,
+PORT8,
 
 //Sideways tracker diameter (reverse to make the direction switch):
 -2.125,
@@ -117,33 +117,36 @@ bool auto_started = false;
 
 void pre_auton() {
   // Initializing Robot Configuration. DO NOT REMOVE!
+  lightRed = !lightRed;
   vexcodeInit();
   default_constants();
 
   while(!auto_started){
     Brain.Screen.clearScreen();
-    Brain.Screen.printAt(5, 20, "Bogglesworth Push Back");
+    Brain.Screen.printAt(5, 20, "Tachyon Override");
     Brain.Screen.printAt(5, 40, "Battery Percentage:");
     Brain.Screen.printAt(5, 60, "%d", Brain.Battery.capacity());
     Brain.Screen.printAt(5, 80, "Chassis Heading Reading:");
     Brain.Screen.printAt(5, 100, "%f", chassis.get_absolute_heading());if (Cont.ButtonB.pressing())
+    Brain.Screen.printAt(5, 160, "Winch Degree:");
+    Brain.Screen.printAt(5, 180, "%f%", rightWinch.position(deg));
     Brain.Screen.printAt(5, 120, "Selected Auton:");
      
     switch(current_auton_selection){
       case 0:
-        Brain.Screen.printAt(5, 140, "Worst Right Auton Ever Invented");
+        Brain.Screen.printAt(5, 140, "Score One Close");
         break;
       case 1:
-        Brain.Screen.printAt(5, 140, "Worst Left Auton Ever Invented");
+        Brain.Screen.printAt(5, 140, "Score One Far");
         break;
       case 2:
-        Brain.Screen.printAt(5, 140, "Full Mid Auton");
+        Brain.Screen.printAt(5, 140, "Toggler");
         break;
       case 3:
-        Brain.Screen.printAt(5, 140, "Skills Auton");
+        Brain.Screen.printAt(5, 140, "SAWP Helper");
         break;
       case 4:
-        Brain.Screen.printAt(5, 140, "SAWP Helper");
+        Brain.Screen.printAt(5, 140, "Skills");
         break;
       case 5:
         Brain.Screen.printAt(5, 140, "Auton 6");
@@ -174,21 +177,23 @@ void pre_auton() {
 
 void autonomous(void) {
   auto_started = true;
+  lightRed = !lightRed;
+  lightGrn = !lightGrn;
   switch(current_auton_selection){ 
     case 0:
-      SAWPHelper();
+      scoreOneClose();
       break;
     case 1:         
-      toggler();
+      scoreOneFar();
       break;
     case 2:
-      fullMidAuto();
+      toggler();
       break;
     case 3:
-      skillsAuton();
+      SAWPHelper();
       break;
     case 4:
-      SAWPHelper();
+      Skills();
       break;
     case 5:
       break;
@@ -213,56 +218,73 @@ void autonomous(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
+double minWinchPos = 2;
+double maxWinchPos = 1125;
+
+int matchTimeMs = 105000;
+vex::timer matchTimer;
+
 void usercontrol(void) {
-  bool armState = false;
+  int elapsedMs = matchTimer.time(msec);
+  int remainingTime = (matchTimeMs - elapsedMs) / 1000;
+
+  if (remainingTime % 30 == 0)
+		{
+			Cont.rumble(".");
+		}
+		else if (remainingTime <= 20 && remainingTime % 5 == 0)
+		{
+			Cont.rumble("-");
+		}
+		else if (remainingTime == 0)
+		{
+			Cont.rumble("-.-");
+		}
+
+  leftWinch.resetPosition();
+  rightWinch.resetPosition();
   // User control code here, inside the loop
   while (1) {
     // This is the main execution loop for the user control program.
     // Each time through the loop your program should update motor + servo
     // values based on feedback from the joysticks.
-    if (Cont.ButtonL1.pressing())
+    if (Cont.ButtonL1.pressing() && lift.position(deg) <= maxWinchPos)
     {
-      frontWinch.spin(fwd, 200, rpm);
-      rearWinch.spin(fwd, 200, rpm);
+      lift.spin(fwd, 200, rpm);
     }
-    else if (Cont.ButtonL2.pressing())
+    else if (Cont.ButtonL2.pressing() && lift.position(deg) >= minWinchPos)
     {
-      frontWinch.spin(reverse, 100, rpm);
-      rearWinch.spin(reverse, 100, rpm);
+      lift.spin(reverse, 100, rpm);
+    }
+    else if (leftWinch.position(deg) < minWinchPos){
+      lift.spin(fwd, 20, rpm);
     }
     else{
-      frontWinch.stop(hold);
-      rearWinch.stop(hold);
+      lift.stop(hold);
     }
 
     if (Cont.ButtonB.pressing())
     {
       intake.spin(fwd, 12, volt);
-      claw.spin(reverse, 12, volt);
     }
     else if (Cont.ButtonDown.pressing())
     {
       intake.spin(reverse, 12, volt);
-      claw.spin(fwd, 12, volt);
     }
     else {
       intake.stop();
-      claw.stop();
     }
     
+    if (Cont.ButtonY.PRESSED)
+    {
+      pistonClaw = !pistonClaw;
+    }
+
     if (Cont.ButtonRight.PRESSED)
     {
-      if (armState == false)
-      {
-        arm.spinTo(-200, deg);
-        armState = true;
-      }
-      else if (armState == true)
-      {
-        arm.spinTo(0, deg);
-        armState = false;
-      }
+      pistonHinge = !pistonHinge;
     }
+
     //Replace this line with chassis.control_tank(); for tank drive 
     //or chassis.control_holonomic(); for holo drive.
     chassis.control_arcade();
